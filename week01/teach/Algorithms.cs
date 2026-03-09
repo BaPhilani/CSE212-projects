@@ -33,6 +33,7 @@ public static class Algorithms {
     /// The count variable is keeping track of the amount
     /// of work done in the function.  When the function is 
     /// done the count is returned.
+    /// Big-O: O(n)
     /// </summary>
     /// <param name="size">the amount of work to do</param>
     private static int Algorithm1(int size) {
@@ -47,6 +48,7 @@ public static class Algorithms {
     /// The count variable is keeping track of the amount
     /// of work done in the function.  When the function is 
     /// done the count is returned.
+    /// Big-O: O(n^2)
     /// </summary>
     /// <param name="size">the amount of work to do</param>
     private static int Algorithm2(int size) {
@@ -62,6 +64,7 @@ public static class Algorithms {
     /// The count variable is keeping track of the amount
     /// of work done in the function.  When the function is 
     /// done the count is returned.
+    /// Big-O: O(log n)
     /// </summary>
     /// <param name="size">the amount of work to do</param>
     private static int Algorithm3(int size) {
