@@ -4,31 +4,95 @@
 /// </summary>
 public class CustomerService {
     public static void Run() {
-        // Example code to see what's in the customer service queue:
-        // var cs = new CustomerService(10);
-        // Console.WriteLine(cs);
+        var originalIn = Console.In;
+        var originalOut = Console.Out;
 
-        // Test Cases
+        string CaptureOutput(Action action, string input = "") {
+            var previousIn = Console.In;
+            var previousOut = Console.Out;
+            Console.SetIn(new StringReader(input));
+            var writer = new StringWriter();
+            Console.SetOut(writer);
+            try {
+                action();
+                return writer.ToString();
+            }
+            finally {
+                Console.SetIn(previousIn);
+                Console.SetOut(previousOut);
+            }
+        }
 
-        // Test 1
-        // Scenario: 
-        // Expected Result: 
-        Console.WriteLine("Test 1");
+        void RestoreConsole() {
+            Console.SetIn(originalIn);
+            Console.SetOut(originalOut);
+        }
 
-        // Defect(s) Found: 
+        void Report(int testNumber, string scenario, bool passed) {
+            Console.WriteLine($"Test {testNumber}: {scenario}");
+            Console.WriteLine($"Result: {(passed ? "PASS" : "FAIL")}");
+            Console.WriteLine("=================");
+        }
 
-        Console.WriteLine("=================");
+        try {
+            // Test 1
+            // Scenario: Valid max queue size is provided.
+            // Expected Result: Queue reports the provided max size.
+            var service = new CustomerService(4);
+            Report(1, "Valid queue size is used", service.ToString().Contains("max_size=4"));
 
-        // Test 2
-        // Scenario: 
-        // Expected Result: 
-        Console.WriteLine("Test 2");
+            // Test 2
+            // Scenario: Invalid max queue size is provided.
+            // Expected Result: Queue defaults max size to 10.
+            service = new CustomerService(0);
+            Report(2, "Invalid queue size defaults to 10", service.ToString().Contains("max_size=10"));
 
-        // Defect(s) Found: 
+            // Test 3
+            // Scenario: Add one customer.
+            // Expected Result: Customer record is enqueued.
+            service = new CustomerService(3);
+            CaptureOutput(() => service.AddNewCustomer(), "Alice\nA100\nBilling issue\n");
+            var queueAfterAdd = service.ToString();
+            var addPassed = queueAfterAdd.Contains("size=1") &&
+                            queueAfterAdd.Contains("Alice (A100)  : Billing issue");
+            Report(3, "AddNewCustomer enqueues a customer", addPassed);
 
-        Console.WriteLine("=================");
+            // Test 4
+            // Scenario: Add a customer when queue is full.
+            // Expected Result: Error is displayed and customer is not added.
+            service = new CustomerService(1);
+            CaptureOutput(() => service.AddNewCustomer(), "Bob\nB200\nPassword reset\n");
+            var fullQueueOutput = CaptureOutput(() => service.AddNewCustomer(), "Carol\nC300\nLocked account\n");
+            var queueAfterFull = service.ToString();
+            var fullPassed = fullQueueOutput.Contains("Maximum Number of Customers in Queue.") &&
+                             queueAfterFull.Contains("size=1") &&
+                             !queueAfterFull.Contains("Carol (C300)");
+            Report(4, "Full queue shows error on add", fullPassed);
 
-        // Add more Test Cases As Needed Below
+            // Test 5
+            // Scenario: Serve next customer from a non-empty queue.
+            // Expected Result: The next customer is displayed and dequeued.
+            service = new CustomerService(3);
+            CaptureOutput(() => service.AddNewCustomer(), "Diana\nD400\nPayment failed\n");
+            CaptureOutput(() => service.AddNewCustomer(), "Evan\nE500\nAddress change\n");
+            var serveOutput = CaptureOutput(() => service.ServeCustomer());
+            var queueAfterServe = service.ToString();
+            var servePassed = serveOutput.Contains("Diana (D400)  : Payment failed") &&
+                              queueAfterServe.Contains("size=1") &&
+                              queueAfterServe.Contains("Evan (E500)  : Address change") &&
+                              !queueAfterServe.Contains("Diana (D400)");
+            Report(5, "ServeCustomer dequeues and displays next customer", servePassed);
+
+            // Test 6
+            // Scenario: Serve customer from an empty queue.
+            // Expected Result: Error is displayed.
+            service = new CustomerService(2);
+            var emptyServeOutput = CaptureOutput(() => service.ServeCustomer());
+            Report(6, "Empty queue shows error on serve", emptyServeOutput.Contains("No Customers in the queue"));
+        }
+        finally {
+            RestoreConsole();
+        }
     }
 
     private readonly List<Customer> _queue = new();
@@ -67,7 +131,7 @@ public class CustomerService {
     /// </summary>
     private void AddNewCustomer() {
         // Verify there is room in the service queue
-        if (_queue.Count > _maxSize) {
+        if (_queue.Count >= _maxSize) {
             Console.WriteLine("Maximum Number of Customers in Queue.");
             return;
         }
@@ -88,8 +152,13 @@ public class CustomerService {
     /// Dequeue the next customer and display the information.
     /// </summary>
     private void ServeCustomer() {
-        _queue.RemoveAt(0);
+        if (_queue.Count <= 0) {
+            Console.WriteLine("No Customers in the queue");
+            return;
+        }
+
         var customer = _queue[0];
+        _queue.RemoveAt(0);
         Console.WriteLine(customer);
     }
 
