@@ -27,10 +27,29 @@ public class Basketball
             var fields = reader.ReadFields()!;
             var playerId = fields[0];
             var points = int.Parse(fields[8]);
+            
+            // Add or accumulate points for each player
+            if (players.ContainsKey(playerId)) {
+                players[playerId] += points;
+            } else {
+                players[playerId] = points;
+            }
         }
 
-        Console.WriteLine($"Players: {{{string.Join(", ", players)}}}");
+        // Convert dictionary to a list of key-value pairs and sort by points (descending)
+        var sortedPlayers = players
+            .OrderByDescending(kvp => kvp.Value)
+            .Take(10)
+            .ToList();
 
-        var topPlayers = new string[10];
+        // Display the top 10 players in a formatted table
+        Console.WriteLine("Top 10 Players by Total Points");
+        Console.WriteLine("================================");
+        Console.WriteLine("{0,-15} {1,15}", "Player ID", "Total Points");
+        Console.WriteLine("--------------------------------");
+        
+        foreach (var player in sortedPlayers) {
+            Console.WriteLine("{0,-15} {1,15}", player.Key, player.Value);
+        }
     }
 }
