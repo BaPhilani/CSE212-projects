@@ -94,8 +94,48 @@ public static class SetsAndMaps
     /// </summary>
     public static bool IsAnagram(string word1, string word2)
     {
-        // TODO Problem 3 - ADD YOUR CODE HERE
-        return false;
+        // Normalize both words: remove spaces and convert to lowercase
+        string normalized1 = word1.Replace(" ", "").ToLower();
+        string normalized2 = word2.Replace(" ", "").ToLower();
+        
+        // If lengths are different, they can't be anagrams
+        if (normalized1.Length != normalized2.Length)
+        {
+            return false;
+        }
+        
+        // Create a dictionary to count character frequencies
+        var charCount = new Dictionary<char, int>();
+        
+        // Count characters in word1
+        foreach (char c in normalized1)
+        {
+            if (charCount.ContainsKey(c))
+            {
+                charCount[c]++;
+            }
+            else
+            {
+                charCount[c] = 1;
+            }
+        }
+        
+        // Check characters in word2
+        foreach (char c in normalized2)
+        {
+            if (!charCount.ContainsKey(c))
+            {
+                return false;
+            }
+            
+            charCount[c]--;
+            if (charCount[c] < 0)
+            {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     /// <summary>
